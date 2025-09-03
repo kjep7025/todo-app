@@ -20,7 +20,7 @@ function App() {
   return (
     <div className="app-container">
       {/* Title */}
-      <h1>To-Do App</h1>
+      <h1>To-Do List</h1>
 
       {/* Input field and Add Task button */}
       <div className="input-section">
