@@ -26,22 +26,24 @@ function App() {
       <button onClick={addTask}>Add Task</button>
 
       {/* Render the list */}
-      <ul>
+     <div>
   {tasks.map((t, index) => (
-    <li key={index}>
-      {t} {/* Task text */}
-      <button 
+    <div key={index} style={{ marginBottom: "8px" }}>
+      <input type="checkbox" /> {/* checkbox instead of bullet */}
+      <span style={{ marginLeft: "8px" }}>{t}</span>
+      <button
         onClick={() => {
-          const newTasks = tasks.filter((_, i) => i !== index); // remove this task
-          setTasks(newTasks); // update state
+          const newTasks = tasks.filter((_, i) => i !== index);
+          setTasks(newTasks);
         }}
         style={{ marginLeft: "10px" }}
       >
         Delete
       </button>
-    </li>
+    </div>
   ))}
-</ul>
+</div>
+
 
     </div>
   );
