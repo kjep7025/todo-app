@@ -40,3 +40,12 @@
 .read-the-docs {
   color: #888;
 }
+input {
+  padding: 8px;
+  margin-right: 10px;  /* space between input and button */
+}
+
+button {
+  padding: 8px 12px;
+  cursor: pointer;
+}
