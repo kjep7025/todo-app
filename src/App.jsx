@@ -14,7 +14,7 @@ function App() {
 
   return (
     <div>
-      <h1>My To-Do App</h1>
+      <h1>To-Do App</h1>
 
       {/* Input field + button */}
       <input
