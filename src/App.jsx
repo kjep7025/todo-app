@@ -12,42 +12,36 @@ function App() {
     setTask("");                              // clear the input
   };
 
+  const removeTask = (index) => {
+    setTasks(tasks.filter((_, i) => i !== index));
+ 
   return (
-    <div>
+    <div className="app">
       <h1>To-Do App</h1>
 
-      {/* Input field + button */}
-      <input
-        type="text"
-        value={task}
-        onChange={(e) => setTask(e.target.value)}
-        placeholder="Enter a task"
-      />
-      <button onClick={addTask}>Add Task</button>
+      <div className="add-row">
+        <input
+          type="text"
+          value={task}
+          onChange={(e) => setTask(e.target.value)}
+          placeholder="Enter a task"
+        />
+        <button className="primary" onClick={addTask}>Add Task</button>
+      </div>
 
-      {/* Render the list */}
-     <div>
-  {tasks.map((t, index) => (
-    <div key={index} style={{ marginBottom: "8px" }}>
-      <input type="checkbox" /> {/* checkbox instead of bullet */}
-      <span style={{ marginLeft: "8px" }}>{t}</span>
-      <button
-        onClick={() => {
-          const newTasks = tasks.filter((_, i) => i !== index);
-          setTasks(newTasks);
-        }}
-        style={{ marginLeft: "10px" }}
-      >
-        Delete
-      </button>
-    </div>
-  ))}
-</div>
-
-
+      <div className="task-list">
+        {tasks.map((t, index) => (
+          <div className="task-row" key={index}>
+            <input type="checkbox" />
+            <span className="text">{t}</span>
+            <button className="delete" onClick={() => removeTask(index)}>
+              Delete
+            </button>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
-
 
 export default App;
