@@ -1,47 +1,65 @@
-import { useState } from "react";
-import "./App.css";
+// Import React hooks and CSS styles
+import { useState } from 'react'
+import './App.css'
 
+// Main App component
 function App() {
-  const [task, setTask] = useState("");
-  const [tasks, setTasks] = useState([]);
+  // State to store the current input (what the user types)
+  const [task, setTask] = useState("")
 
+  // State to store the list of tasks
+  const [tasks, setTasks] = useState([])
+
+  // Function to add a new task
   const addTask = () => {
-    if (task.trim() === "") return;
-    setTasks([...tasks, task.trim()]);
-    setTask("");
-  };
-
-  const removeTask = (index) => {
-    setTasks(tasks.filter((_, i) => i !== index));
-  };
+    if (task.trim() === "") return // prevent empty tasks
+    setTasks([...tasks, task])     // add new task to the list
+    setTask("")                    // clear input after adding
+  }
 
   return (
-    <div className="app">
+    <div className="app-container">
+      {/* Title */}
       <h1>To-Do App</h1>
 
-      <div className="add-row">
+      {/* Input field and Add Task button */}
+      <div className="input-section">
         <input
           type="text"
           value={task}
-          onChange={(e) => setTask(e.target.value)}
+          onChange={(e) => setTask(e.target.value)} // update task state as user types
           placeholder="Enter a task"
         />
-        <button className="primary" onClick={addTask}>Add Task</button>
+        <button onClick={addTask}>Add Task</button>
       </div>
 
-      <div className="task-list">
+      {/* Task List */}
+      <ul className="task-list">
         {tasks.map((t, index) => (
-          <div className="task-row" key={index}>
+          <li key={index}>
+            {/* Checkbox */}
             <input type="checkbox" />
-            <span className="text">{t}</span>
-            <button className="delete" onClick={() => removeTask(index)}>
+
+            {/* Task text */}
+            <span>{t}</span>
+
+            {/* Delete button */}
+            <button
+              className="delete-btn"
+              onClick={() => {
+                // Filter out the deleted task by index
+                const newTasks = tasks.filter((_, i) => i !== index)
+                setTasks(newTasks)
+              }}
+            >
               Delete
             </button>
-          </div>
+          </li>
         ))}
-      </div>
+      </ul>
     </div>
-  );
+  )
 }
 
-export default App;
+// Export App component so it can be used in main.jsx
+export default App
