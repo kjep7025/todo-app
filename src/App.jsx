@@ -27,10 +27,22 @@ function App() {
 
       {/* Render the list */}
       <ul>
-        {tasks.map((t, index) => (
-          <li key={index}>{t}</li>
-        ))}
-      </ul>
+  {tasks.map((t, index) => (
+    <li key={index}>
+      {t} {/* Task text */}
+      <button 
+        onClick={() => {
+          const newTasks = tasks.filter((_, i) => i !== index); // remove this task
+          setTasks(newTasks); // update state
+        }}
+        style={{ marginLeft: "10px" }}
+      >
+        Delete
+      </button>
+    </li>
+  ))}
+</ul>
+
     </div>
   );
 }
