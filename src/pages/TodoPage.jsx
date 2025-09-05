@@ -38,8 +38,10 @@ function TodoPage({ tasks, onAddTask, onToggleTask, onRemoveTask }) {
           onToggleTask={onToggleTask}
           onRemoveTask={onRemoveTask}
           showCompleted={false}
+        />
+      </div>
+    </div>
+  );
 }
 
 export default TodoPage;
-  )
-}
