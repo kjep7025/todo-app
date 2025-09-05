@@ -100,11 +100,19 @@ function App() {
   const loadTasks = async (userId) => {
     try {
       addDebugInfo(`Loading tasks for user: ${userId}`);
-      const { data, error } = await supabase
+      
+      // Add timeout to prevent hanging
+      const taskQuery = supabase
         .from('tasks')
         .select('*')
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
+      
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Task loading timeout after 10 seconds')), 10000)
+      );
+      
+      const { data, error } = await Promise.race([taskQuery, timeoutPromise]);
 
       if (error) {
         addDebugInfo(`Task loading error: ${error.message}`);
@@ -112,10 +120,17 @@ function App() {
       }
       
       addDebugInfo(`Loaded ${data?.length || 0} tasks`);
+      addDebugInfo(`Task loading completed successfully`);
       setTasks(data || []);
     } catch (error) {
       addDebugInfo(`Load tasks failed: ${error.message}`);
-      setError(`Failed to load tasks: ${error.message}`);
+      // Don't show error for timeout, just continue with empty tasks
+      if (error.message.includes('timeout')) {
+        addDebugInfo('Task loading timed out, continuing with empty task list');
+        setTasks([]);
+      } else {
+        setError(`Failed to load tasks: ${error.message}`);
+      }
     }
   };
 
