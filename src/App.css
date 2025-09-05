@@ -1,5 +1,6 @@
 /* Main App component styles - imports all other stylesheets */
 @import './components/Login.css';
+@import './components/AuthForm.css';
 @import './components/TodoApp.css';
 @import './components/Button.css';
 @import './components/Navigation.css';
@@ -17,4 +18,13 @@
 /* Update existing styles for better layout */
 .login-container {
   margin: 0 auto;
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  font-size: 1.2rem;
+  color: var(--text-secondary);
 }

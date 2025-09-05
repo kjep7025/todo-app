@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
+import { supabase, getCurrentUser, getTasks, addTask as addTaskToDb, updateTask, deleteTask } from "./lib/supabase";
+import AuthForm from "./components/AuthForm";
 import Navigation from "./components/Navigation";
 import TodoPage from "./pages/TodoPage";
 import CompletedPage from "./pages/CompletedPage";
@@ -7,125 +9,126 @@ import "./App.css";
 
 function App() {
   // ---------- Authentication state ----------
-  const [loggedIn, setLoggedIn] = useState(false);
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   // ---------- Task state ----------
   const [tasks, setTasks] = useState([]);
 
-  // Load saved data on mount
+  // Check for existing session and load tasks
   useEffect(() => {
-    const savedUser = localStorage.getItem("loggedUser");
-    const savedTasks = localStorage.getItem("todoTasks");
-    
-    if (savedUser) {
-      setLoggedIn(true);
-      setUsername(savedUser);
-    }
-    
-    if (savedTasks) {
-      setTasks(JSON.parse(savedTasks));
-    }
+    const initializeApp = async () => {
+      try {
+        const currentUser = await getCurrentUser();
+        if (currentUser) {
+          setUser(currentUser);
+          await loadTasks();
+        }
+      } catch (error) {
+        console.error('Error initializing app:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initializeApp();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session?.user) {
+        setUser(session.user);
+        await loadTasks();
+      } else {
+        setUser(null);
+        setTasks([]);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  // Save tasks to localStorage whenever tasks change
-  useEffect(() => {
-    if (loggedIn) {
-      localStorage.setItem("todoTasks", JSON.stringify(tasks));
+  const loadTasks = async () => {
+    try {
+      const { data, error } = await getTasks();
+      if (error) throw error;
+      setTasks(data || []);
+    } catch (error) {
+      console.error('Error loading tasks:', error);
     }
-  }, [tasks, loggedIn]);
+  };
 
-  const handleLogin = (e) => {
-    e.preventDefault();
-    if (username.trim() === "") {
-      alert("Please enter a username to sign in.");
-      return;
+  const handleAuthSuccess = (user) => {
+    setUser(user);
+  };
+
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      setUser(null);
+      setTasks([]);
+    } catch (error) {
+      console.error('Error signing out:', error);
     }
-    setLoggedIn(true);
-    localStorage.setItem("loggedUser", username.trim());
-    setPassword("");
   };
 
-  const handleLogout = () => {
-    setLoggedIn(false);
-    localStorage.removeItem("loggedUser");
-    localStorage.removeItem("todoTasks");
-    setUsername("");
-    setPassword("");
-    setTasks([]);
+  const addTask = async (taskText, priority = 'medium') => {
+    try {
+      const { data, error } = await addTaskToDb(taskText, priority);
+      if (error) throw error;
+      if (data && data[0]) {
+        setTasks(prevTasks => [...prevTasks, data[0]]);
+      }
+    } catch (error) {
+      console.error('Error adding task:', error);
+    }
   };
 
-  const addTask = (taskText, priority = 'medium') => {
-    const newTask = {
-      id: Date.now() + Math.random(), // Simple ID generation
-      text: taskText,
-      priority: priority,
-      completed: false,
-      createdAt: new Date().toISOString(),
-      completedAt: null
-    };
-    setTasks(prevTasks => [...prevTasks, newTask]);
+  const toggleTask = async (taskId) => {
+    try {
+      const task = tasks.find(t => t.id === taskId);
+      if (!task) return;
+
+      const updates = {
+        completed: !task.completed,
+        completed_at: !task.completed ? new Date().toISOString() : null
+      };
+
+      const { data, error } = await updateTask(taskId, updates);
+      if (error) throw error;
+
+      setTasks(prevTasks =>
+        prevTasks.map(t =>
+          t.id === taskId ? { ...t, ...updates } : t
+        )
+      );
+    } catch (error) {
+      console.error('Error toggling task:', error);
+    }
   };
 
-  const toggleTask = (taskId) => {
-    setTasks(prevTasks =>
-      prevTasks.map(task =>
-        task.id === taskId
-          ? {
-              ...task,
-              completed: !task.completed,
-              completedAt: !task.completed ? new Date().toISOString() : null
-            }
-          : task
-      )
-    );
+  const removeTask = async (taskId) => {
+    try {
+      const { error } = await deleteTask(taskId);
+      if (error) throw error;
+      setTasks(prevTasks => prevTasks.filter(task => task.id !== taskId));
+    } catch (error) {
+      console.error('Error removing task:', error);
+    }
   };
 
-  const removeTask = (taskId) => {
-    setTasks(prevTasks => prevTasks.filter(task => task.id !== taskId));
-  };
+  if (loading) {
+    return <div className="loading">Loading...</div>;
+  }
 
-  // ---------- Login form ----------
-  if (!loggedIn) {
-    return (
-      <div className="login-container">
-        <h1>Sign in</h1>
-        <form className="login-form" onSubmit={handleLogin}>
-          <label>
-            Username
-            <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="your name or email"
-              autoFocus
-            />
-          </label>
-
-          <label>
-            Password
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="password"
-            />
-          </label>
-
-          <div className="login-actions">
-            <button type="submit" className="primary">Sign in</button>
-          </div>
-        </form>
-        <p className="login-note">Demo login — any username works. Password is not verified.</p>
-      </div>
-    );
+  // ---------- Authentication form ----------
+  if (!user) {
+    return <AuthForm onAuthSuccess={handleAuthSuccess} />;
   }
 
   // ---------- Main app with routing ----------
   return (
     <div className="app-container">
-      <Navigation username={username} onLogout={handleLogout} />
+      <Navigation username={user.email} onLogout={handleLogout} />
       
       <Routes>
         <Route path="/" element={<Navigate to="/todo" replace />} />
