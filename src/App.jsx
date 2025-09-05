@@ -1,5 +1,8 @@
-// App.jsx
 import { useState, useEffect } from "react";
+import { Routes, Route, Navigate } from "react-router-dom";
+import Navigation from "./components/Navigation";
+import TodoPage from "./pages/TodoPage";
+import CompletedPage from "./pages/CompletedPage";
 import "./App.css";
 
 function App() {
@@ -8,50 +11,81 @@ function App() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
-  // optional: remember login across refresh (demo only)
+  // ---------- Task state ----------
+  const [tasks, setTasks] = useState([]);
+
+  // Load saved data on mount
   useEffect(() => {
     const savedUser = localStorage.getItem("loggedUser");
+    const savedTasks = localStorage.getItem("todoTasks");
+    
     if (savedUser) {
       setLoggedIn(true);
       setUsername(savedUser);
     }
+    
+    if (savedTasks) {
+      setTasks(JSON.parse(savedTasks));
+    }
   }, []);
+
+  // Save tasks to localStorage whenever tasks change
+  useEffect(() => {
+    if (loggedIn) {
+      localStorage.setItem("todoTasks", JSON.stringify(tasks));
+    }
+  }, [tasks, loggedIn]);
 
   const handleLogin = (e) => {
     e.preventDefault();
-    // very simple "fake auth" check: require username
     if (username.trim() === "") {
       alert("Please enter a username to sign in.");
       return;
     }
-    // mark as logged in and persist username (demo)
     setLoggedIn(true);
     localStorage.setItem("loggedUser", username.trim());
-    setPassword(""); // clear password field
+    setPassword("");
   };
 
   const handleLogout = () => {
     setLoggedIn(false);
     localStorage.removeItem("loggedUser");
+    localStorage.removeItem("todoTasks");
     setUsername("");
     setPassword("");
+    setTasks([]);
   };
 
-  // ---------- Todo state (existing features) ----------
-  const [task, setTask] = useState("");
-  const [tasks, setTasks] = useState([]);
-
-  const addTask = () => {
-    if (task.trim() === "") return;
-    setTasks([...tasks, task.trim()]);
-    setTask("");
+  const addTask = (taskText) => {
+    const newTask = {
+      id: Date.now() + Math.random(), // Simple ID generation
+      text: taskText,
+      completed: false,
+      createdAt: new Date().toISOString(),
+      completedAt: null
+    };
+    setTasks(prevTasks => [...prevTasks, newTask]);
   };
 
-  const removeTask = (index) => {
-    setTasks(tasks.filter((_, i) => i !== index));
+  const toggleTask = (taskId) => {
+    setTasks(prevTasks =>
+      prevTasks.map(task =>
+        task.id === taskId
+          ? {
+              ...task,
+              completed: !task.completed,
+              completedAt: !task.completed ? new Date().toISOString() : null
+            }
+          : task
+      )
+    );
   };
 
-  // ---------- Render: if not logged in -> show login form ----------
+  const removeTask = (taskId) => {
+    setTasks(prevTasks => prevTasks.filter(task => task.id !== taskId));
+  };
+
+  // ---------- Login form ----------
   if (!loggedIn) {
     return (
       <div className="login-container">
@@ -87,38 +121,35 @@ function App() {
     );
   }
 
-  // ---------- Logged-in app UI ----------
+  // ---------- Main app with routing ----------
   return (
     <div className="app-container">
-      <header className="app-header">
-        <h1>To-Do App</h1>
-        <div className="user-actions">
-          <span className="user-name">Signed in as <strong>{username}</strong></span>
-          <button className="logout" onClick={handleLogout}>Logout</button>
-        </div>
-      </header>
-
-      {/* Input row */}
-      <div className="input-section">
-        <input
-          type="text"
-          value={task}
-          onChange={(e) => setTask(e.target.value)}
-          placeholder="Enter a task"
+      <Navigation username={username} onLogout={handleLogout} />
+      
+      <Routes>
+        <Route path="/" element={<Navigate to="/todo" replace />} />
+        <Route 
+          path="/todo" 
+          element={
+            <TodoPage 
+              tasks={tasks}
+              onAddTask={addTask}
+              onToggleTask={toggleTask}
+              onRemoveTask={removeTask}
+            />
+          } 
         />
-        <button className="primary" onClick={addTask}>Add Task</button>
-      </div>
-
-      {/* Task list */}
-      <ul className="task-list">
-        {tasks.map((t, index) => (
-          <li key={index} className="task">
-            <input type="checkbox" />
-            <span>{t}</span>
-            <button className="delete" onClick={() => removeTask(index)}>Delete</button>
-          </li>
-        ))}
-      </ul>
+        <Route 
+          path="/completed" 
+          element={
+            <CompletedPage 
+              tasks={tasks}
+              onToggleTask={toggleTask}
+              onRemoveTask={removeTask}
+            />
+          } 
+        />
+      </Routes>
     </div>
   );
 }

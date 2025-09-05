@@ -2,5 +2,19 @@
 @import './components/Login.css';
 @import './components/TodoApp.css';
 @import './components/Button.css';
+@import './components/Navigation.css';
+@import './components/TodoList.css';
+@import './components/TaskInput.css';
+@import './pages/Pages.css';
 
-/* App-specific styles can go here if needed */
+/* App-specific styles */
+.app-container {
+  min-height: 100vh;
+  background: var(--bg-primary);
+  padding: 20px;
+}
+
+/* Update existing styles for better layout */
+.login-container {
+  margin: 0 auto;
+}
