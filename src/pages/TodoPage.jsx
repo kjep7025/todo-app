@@ -53,3 +53,5 @@ function TodoPage({ tasks, onAddTask, onToggleTask, onRemoveTask }) {
 }
 
 export default TodoPage;
+  )
+}
