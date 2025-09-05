@@ -6,7 +6,7 @@ function TodoPage({ tasks, onAddTask, onToggleTask, onRemoveTask }) {
     <div className="page-container">
       <div className="page-header">
         <h2>Active Tasks</h2>
-        <p>Manage your daily tasks and stay productive</p>
+        <p>Manage your active tasks and stay productive</p>
       </div>
       
       <TaskInput onAddTask={onAddTask} />

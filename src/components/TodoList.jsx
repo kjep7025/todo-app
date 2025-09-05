@@ -6,9 +6,11 @@ function TodoList({ tasks, onToggleTask, onRemoveTask, showCompleted = false }) 
   
   const filteredTasks = tasks.filter(task => {
     if (showCompleted) return task.completed;
+    // On active page, only show non-completed tasks
     if (filter === 'active') return !task.completed;
     if (filter === 'completed') return task.completed;
-    return true;
+    // For 'all' filter on active page, still only show non-completed tasks
+    return !task.completed;
   });
 
   // Sort tasks by priority (high -> medium -> low) and then by creation date
@@ -44,22 +46,16 @@ function TodoList({ tasks, onToggleTask, onRemoveTask, showCompleted = false }) 
       {!showCompleted && (
         <div className="filter-buttons">
           <button 
-            className={filter === 'all' ? 'filter-btn active' : 'filter-btn'}
-            onClick={() => setFilter('all')}
-          >
-            All Tasks
-          </button>
-          <button 
             className={filter === 'active' ? 'filter-btn active' : 'filter-btn'}
             onClick={() => setFilter('active')}
           >
-            Active
+            Active Tasks
           </button>
           <button 
-            className={filter === 'completed' ? 'filter-btn active' : 'filter-btn'}
-            onClick={() => setFilter('completed')}
+            className={filter === 'all' ? 'filter-btn active' : 'filter-btn'}
+            onClick={() => setFilter('all')}
           >
-            Completed
+            All Active
           </button>
         </div>
       )}
@@ -70,17 +66,13 @@ function TodoList({ tasks, onToggleTask, onRemoveTask, showCompleted = false }) 
           <h3>
             {showCompleted 
               ? "No completed tasks yet" 
-              : filter === 'active' 
-                ? "No active tasks" 
-                : filter === 'completed'
-                  ? "No completed tasks"
-                  : "No tasks yet"
+             : "No active tasks"
             }
           </h3>
           <p>
             {showCompleted 
               ? "Complete some tasks to see them here!" 
-              : "Add a task to get started"}
+             : "Add a new task to get started"}
           </p>
         </div>
       ) : (
