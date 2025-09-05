@@ -8,45 +8,46 @@ import CompletedPage from "./pages/CompletedPage";
 import "./App.css";
 
 function App() {
-  // ---------- Authentication state ----------
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  // ---------- Task state ----------
   const [tasks, setTasks] = useState([]);
 
-  // Check for existing session and load tasks
+  // Simplified initialization
   useEffect(() => {
+    let mounted = true;
+    
     const initializeApp = async () => {
       try {
-        console.log('🚀 Initializing app...');
-        console.log('📍 Step 1: Getting current user');
+        // Add a small delay to ensure everything is ready
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
         const currentUser = await getCurrentUser();
-        console.log('👤 Current user:', currentUser?.email || 'No user');
+        
+        if (!mounted) return;
         
         if (currentUser) {
-          console.log('📍 Step 2: Setting user state');
           setUser(currentUser);
-          console.log('📍 Step 3: Loading tasks');
           await loadTasks();
-        } else {
-          console.log('📍 No user found, showing auth form');
         }
       } catch (error) {
-        console.error('❌ Error initializing app:', error);
-        setError(error.message);
+        if (mounted) {
+          console.error('Error initializing app:', error);
+          setError(error.message);
+        }
       } finally {
-        console.log('✅ App initialization complete');
-        setLoading(false);
+        if (mounted) {
+          setLoading(false);
+        }
       }
     };
 
     initializeApp();
 
-    // Listen for auth changes
+    // Auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('🔄 Auth state changed:', event, session?.user?.email || 'No user');
+      if (!mounted) return;
+      
       if (session?.user) {
         setUser(session.user);
         await loadTasks();
@@ -57,55 +58,52 @@ function App() {
       setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const loadTasks = async () => {
     try {
-      console.log('📋 Loading tasks...');
       const { data, error } = await getTasks();
       if (error) throw error;
-      console.log('📋 Tasks loaded:', data?.length || 0);
       setTasks(data || []);
     } catch (error) {
-      console.error('❌ Error loading tasks:', error);
+      console.error('Error loading tasks:', error);
       setError(error.message);
     }
   };
 
   const handleAuthSuccess = (user) => {
-    console.log('✅ Auth success for:', user.email);
     setUser(user);
+    setError(null);
   };
 
   const handleLogout = async () => {
     try {
-      console.log('👋 Logging out user...');
       await supabase.auth.signOut();
       setUser(null);
       setTasks([]);
-      console.log('✅ User logged out successfully');
+      setError(null);
     } catch (error) {
-      console.error('❌ Error signing out:', error);
+      console.error('Error signing out:', error);
     }
   };
 
   const addTask = async (taskText, priority = 'medium') => {
     if (!taskText || taskText.trim() === '') {
-      console.warn('⚠️ Attempted to add empty task');
       return;
     }
     
     try {
-      console.log('➕ Adding task:', taskText, 'with priority:', priority);
       const { data, error } = await addTaskToDb(taskText, priority);
       if (error) throw error;
       if (data && data[0]) {
         setTasks(prevTasks => [...prevTasks, data[0]]);
-        console.log('✅ Task added successfully:', data[0].text);
       }
     } catch (error) {
-      console.error('❌ Error adding task:', error);
+      console.error('Error adding task:', error);
       setError(error.message);
     }
   };
@@ -129,7 +127,7 @@ function App() {
         )
       );
     } catch (error) {
-      console.error('❌ Error toggling task:', error);
+      console.error('Error toggling task:', error);
       setError(error.message);
     }
   };
@@ -140,19 +138,16 @@ function App() {
       if (error) throw error;
       setTasks(prevTasks => prevTasks.filter(task => task.id !== taskId));
     } catch (error) {
-      console.error('❌ Error removing task:', error);
+      console.error('Error removing task:', error);
       setError(error.message);
     }
   };
 
-  // Show loading state with more details
+  // Show loading with timeout
   if (loading) {
     return (
       <div className="loading">
-        <div>🔄 Loading your tasks...</div>
-        <div style={{ fontSize: '0.9rem', color: '#aaa', marginTop: '10px' }}>
-          Connecting to database...
-        </div>
+        <div>Loading your tasks...</div>
         {error && (
           <div style={{ 
             color: '#ef4444', 
@@ -163,20 +158,18 @@ function App() {
             border: '1px solid rgba(239, 68, 68, 0.2)'
           }}>
             <strong>Error:</strong> {error}
-            <br />
-            <small>Check the browser console for more details</small>
           </div>
         )}
       </div>
     );
   }
 
-  // ---------- Authentication form ----------
+  // Show auth form if no user
   if (!user) {
     return <AuthForm onAuthSuccess={handleAuthSuccess} />;
   }
 
-  // ---------- Main app with routing ----------
+  // Main app
   return (
     <div className="app-container">
       {error && (
