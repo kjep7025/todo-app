@@ -2,12 +2,15 @@ import { useState } from 'react';
 import { signIn, signUp } from '../lib/supabase';
 import './AuthForm.css';
 
-function AuthForm({ onAuthSuccess }) {
+function AuthForm({ onAuthSuccess, error: globalError }) {
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Show global error if passed down
+  const displayError = error || globalError;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -62,7 +65,7 @@ function AuthForm({ onAuthSuccess }) {
           />
         </label>
 
-        {error && <div className="error-message">{error}</div>}
+        {displayError && <div className="error-message">{displayError}</div>}
 
         <div className="auth-actions">
           <button type="submit" className="primary" disabled={loading}>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
-import { supabase, getCurrentUser, getTasks, addTask as addTaskToDb, updateTask, deleteTask } from "./lib/supabase";
+import { supabase } from "./lib/supabase";
 import AuthForm from "./components/AuthForm";
 import Navigation from "./components/Navigation";
 import TodoPage from "./pages/TodoPage";
@@ -13,44 +13,37 @@ function App() {
   const [error, setError] = useState(null);
   const [tasks, setTasks] = useState([]);
 
-  // Simplified initialization
   useEffect(() => {
-    let mounted = true;
-    
-    const initializeApp = async () => {
+    // Check initial session
+    const checkSession = async () => {
       try {
-        // Add a small delay to ensure everything is ready
-        await new Promise(resolve => setTimeout(resolve, 100));
+        const { data: { session }, error } = await supabase.auth.getSession();
         
-        const currentUser = await getCurrentUser();
-        
-        if (!mounted) return;
-        
-        if (currentUser) {
-          setUser(currentUser);
-          await loadTasks();
+        if (error) {
+          console.error('Session error:', error);
+          setError(`Authentication error: ${error.message}`);
+        } else if (session?.user) {
+          setUser(session.user);
+          await loadTasks(session.user.id);
         }
-      } catch (error) {
-        if (mounted) {
-          console.error('Error initializing app:', error);
-          setError(error.message);
-        }
+      } catch (err) {
+        console.error('Failed to check session:', err);
+        setError(`Failed to initialize: ${err.message}`);
       } finally {
-        if (mounted) {
-          setLoading(false);
-        }
+        setLoading(false);
       }
     };
 
-    initializeApp();
+    checkSession();
 
-    // Auth state listener
+    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (!mounted) return;
+      console.log('Auth state changed:', event, session?.user?.email);
       
       if (session?.user) {
         setUser(session.user);
-        await loadTasks();
+        setError(null);
+        await loadTasks(session.user.id);
       } else {
         setUser(null);
         setTasks([]);
@@ -58,20 +51,28 @@ function App() {
       setLoading(false);
     });
 
-    return () => {
-      mounted = false;
-      subscription.unsubscribe();
-    };
+    return () => subscription.unsubscribe();
   }, []);
 
-  const loadTasks = async () => {
+  const loadTasks = async (userId) => {
     try {
-      const { data, error } = await getTasks();
-      if (error) throw error;
+      const { data, error } = await supabase
+        .from('tasks')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error loading tasks:', error);
+        setError(`Failed to load tasks: ${error.message}`);
+        return;
+      }
+
       setTasks(data || []);
-    } catch (error) {
-      console.error('Error loading tasks:', error);
-      setError(error.message);
+      console.log('Loaded tasks:', data?.length || 0);
+    } catch (err) {
+      console.error('Failed to load tasks:', err);
+      setError(`Failed to load tasks: ${err.message}`);
     }
   };
 
@@ -88,23 +89,31 @@ function App() {
       setError(null);
     } catch (error) {
       console.error('Error signing out:', error);
+      setError(`Logout failed: ${error.message}`);
     }
   };
 
   const addTask = async (taskText, priority = 'medium') => {
-    if (!taskText || taskText.trim() === '') {
-      return;
-    }
+    if (!taskText?.trim()) return;
     
     try {
-      const { data, error } = await addTaskToDb(taskText, priority);
+      const { data, error } = await supabase
+        .from('tasks')
+        .insert([{
+          text: taskText.trim(),
+          priority,
+          user_id: user.id,
+          completed: false
+        }])
+        .select()
+        .single();
+
       if (error) throw error;
-      if (data && data[0]) {
-        setTasks(prevTasks => [...prevTasks, data[0]]);
-      }
+      
+      setTasks(prev => [data, ...prev]);
     } catch (error) {
       console.error('Error adding task:', error);
-      setError(error.message);
+      setError(`Failed to add task: ${error.message}`);
     }
   };
 
@@ -118,36 +127,43 @@ function App() {
         completed_at: !task.completed ? new Date().toISOString() : null
       };
 
-      const { data, error } = await updateTask(taskId, updates);
+      const { error } = await supabase
+        .from('tasks')
+        .update(updates)
+        .eq('id', taskId);
+
       if (error) throw error;
 
-      setTasks(prevTasks =>
-        prevTasks.map(t =>
-          t.id === taskId ? { ...t, ...updates } : t
-        )
-      );
+      setTasks(prev => prev.map(t => 
+        t.id === taskId ? { ...t, ...updates } : t
+      ));
     } catch (error) {
       console.error('Error toggling task:', error);
-      setError(error.message);
+      setError(`Failed to update task: ${error.message}`);
     }
   };
 
   const removeTask = async (taskId) => {
     try {
-      const { error } = await deleteTask(taskId);
+      const { error } = await supabase
+        .from('tasks')
+        .delete()
+        .eq('id', taskId);
+
       if (error) throw error;
-      setTasks(prevTasks => prevTasks.filter(task => task.id !== taskId));
+      
+      setTasks(prev => prev.filter(t => t.id !== taskId));
     } catch (error) {
       console.error('Error removing task:', error);
-      setError(error.message);
+      setError(`Failed to delete task: ${error.message}`);
     }
   };
 
-  // Show loading with timeout
+  // Show loading state
   if (loading) {
     return (
       <div className="loading">
-        <div>Loading your tasks...</div>
+        <div>Initializing app...</div>
         {error && (
           <div style={{ 
             color: '#ef4444', 
@@ -155,9 +171,12 @@ function App() {
             padding: '10px', 
             background: 'rgba(239, 68, 68, 0.1)',
             borderRadius: '6px',
-            border: '1px solid rgba(239, 68, 68, 0.2)'
+            border: '1px solid rgba(239, 68, 68, 0.2)',
+            maxWidth: '400px'
           }}>
             <strong>Error:</strong> {error}
+            <br />
+            <small>Please refresh the page or check your internet connection.</small>
           </div>
         )}
       </div>
@@ -166,7 +185,7 @@ function App() {
 
   // Show auth form if no user
   if (!user) {
-    return <AuthForm onAuthSuccess={handleAuthSuccess} />;
+    return <AuthForm onAuthSuccess={handleAuthSuccess} error={error} />;
   }
 
   // Main app
@@ -183,8 +202,15 @@ function App() {
           textAlign: 'center'
         }}>
           <strong>Warning:</strong> {error}
+          <button 
+            onClick={() => setError(null)}
+            style={{ marginLeft: '10px', background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }}
+          >
+            ×
+          </button>
         </div>
       )}
+      
       <Navigation username={user.email} onLogout={handleLogout} />
       
       <Routes>

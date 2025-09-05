@@ -3,17 +3,42 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
+console.log('Supabase config:', {
+  url: supabaseUrl ? 'Set' : 'Missing',
+  key: supabaseAnonKey ? 'Set' : 'Missing'
+});
+
 if (!supabaseUrl || !supabaseAnonKey) {
   console.error('Missing Supabase environment variables');
+  throw new Error('Supabase configuration is missing. Please check your environment variables.');
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: false
+  }
+})
+
+// Test connection
+supabase.from('tasks').select('count', { count: 'exact', head: true })
+  .then(({ error }) => {
+    if (error) {
+      console.error('Supabase connection test failed:', error);
+    } else {
+      console.log('Supabase connection successful');
+    }
+  });
 
 // Auth helpers
 export const signUp = async (email, password) => {
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
+    options: {
+      emailRedirectTo: window.location.origin
+    }
   })
   return { data, error }
 }
@@ -24,73 +49,4 @@ export const signIn = async (email, password) => {
     password,
   })
   return { data, error }
-}
-
-export const signOut = async () => {
-  const { error } = await supabase.auth.signOut()
-  return { error }
-}
-
-export const getCurrentUser = async () => {
-  const { data: { user } } = await supabase.auth.getUser()
-  return user
-}
-
-// Task helpers
-export const getTasks = async () => {
-  const user = await getCurrentUser();
-  if (!user) {
-    return { data: [], error: null };
-  }
-  
-  const { data, error } = await supabase
-    .from('tasks')
-    .select('*')
-    .eq('user_id', user.id)
-    .order('created_at', { ascending: false })
-  
-  return { data, error }
-}
-
-export const addTask = async (text, priority = 'medium') => {
-  const user = await getCurrentUser();
-  if (!user) {
-    throw new Error('User must be authenticated to add tasks');
-  }
-  
-  if (!text || text.trim() === '') {
-    throw new Error('Task text cannot be empty');
-  }
-  
-  const { data, error } = await supabase
-    .from('tasks')
-    .insert([
-      {
-        text: text.trim(),
-        priority,
-        user_id: user.id
-      }
-    ])
-    .select()
-  
-  return { data, error }
-}
-
-export const updateTask = async (id, updates) => {
-  const { data, error } = await supabase
-    .from('tasks')
-    .update(updates)
-    .eq('id', id)
-    .select()
-  
-  return { data, error }
-}
-
-export const deleteTask = async (id) => {
-  const { error } = await supabase
-    .from('tasks')
-    .delete()
-    .eq('id', id)
-  
-  return { error }
 }
