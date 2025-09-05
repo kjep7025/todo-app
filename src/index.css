@@ -1,68 +1,160 @@
-:root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+/* App.css additions for login + app layout */
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
-}
-
+/* center page */
 body {
+  background: #222;
+  color: #fff;
+  font-family: Arial, sans-serif;
   margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
   min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+/* ---------- LOGIN STYLES ---------- */
+.login-container {
+  width: 420px;
+  background: #1f1f1f;
+  padding: 28px;
+  border-radius: 10px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.5);
+  text-align: left;
 }
 
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
+.login-container h1 {
+  margin: 0 0 16px 0;
+  text-align: center;
+  font-size: 1.8rem;
+}
+
+.login-form label {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 0.95rem;
+  color: #ddd;
+}
+
+.login-form input[type="text"],
+.login-form input[type="password"] {
+  width: 100%;
+  padding: 8px 10px;
+  margin-top: 6px;
+  border-radius: 6px;
+  border: 1px solid #444;
+  background: #111;
+  color: #fff;
+}
+
+.login-actions {
+  margin-top: 12px;
+  text-align: center;
+}
+
+.login-note {
+  font-size: 0.85rem;
+  color: #aaa;
+  text-align: center;
+  margin-top: 10px;
+}
+
+/* ---------- APP STYLES (post-login) ---------- */
+.app-container {
+  width: 560px;
+  padding: 24px;
+  background: transparent; /* keep page background consistent */
+}
+
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: 2rem;
+}
+
+.user-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.user-name {
+  font-size: 0.95rem;
+  color: #ddd;
+}
+
+.logout {
+  background: #e06464;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 10px;
   cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+/* input row */
+.input-section {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.input-section input[type="text"] {
+  flex: 1;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #444;
+  background: #111;
+  color: #fff;
+}
+
+/* primary add button */
+button.primary {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+/* tasks list */
+.task-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.task {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 6px;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+
+.task input[type="checkbox"] {
+  transform: scale(1.05);
+}
+
+.task span {
+  flex: 1;
+  text-align: left;
+  color: #eee;
+}
+
+/* delete button */
+button.delete {
+  background: #dc3545;
+  color: white;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
 }
