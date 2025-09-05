@@ -32,9 +32,9 @@ function TaskInput({ onAddTask }) {
           onChange={(e) => setPriority(e.target.value)}
           className="priority-select"
         >
-          <option value="low">Low Priority</option>
-          <option value="medium">Medium Priority</option>
-          <option value="high">High Priority</option>
+          <option value="low">🟢 Low</option>
+          <option value="medium">🟡 Medium</option>
+          <option value="high">🔴 High</option>
         </select>
         <button type="submit" className="primary add-btn">
           Add Task

@@ -1,144 +1,243 @@
-import { useState } from 'react';
-import './App.css';
+import { useState, useEffect } from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { supabase } from './lib/supabase';
+import AuthForm from './components/AuthForm';
+import Navigation from './components/Navigation';
+import TodoPage from './pages/TodoPage';
+import CompletedPage from './pages/CompletedPage';
+import './components/Button.css';
+import './pages/Pages.css';
 
 function App() {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [tasks, setTasks] = useState([]);
-  const [newTask, setNewTask] = useState('');
-  const [priority, setPriority] = useState('medium');
+  const [authError, setAuthError] = useState('');
 
-  const addTask = () => {
-    if (newTask.trim()) {
-      const task = {
-        id: Date.now(),
-        text: newTask.trim(),
-        priority,
-        completed: false,
-        createdAt: new Date().toISOString()
-      };
-      setTasks([task, ...tasks]);
-      setNewTask('');
+  useEffect(() => {
+    // Get initial session
+    const getSession = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error('Session error:', error);
+          setAuthError('Failed to get session');
+        } else {
+          setUser(session?.user ?? null);
+          if (session?.user) {
+            await loadTasks(session.user.id);
+          }
+        }
+      } catch (error) {
+        console.error('Session check failed:', error);
+        setAuthError('Connection failed');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    getSession();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log('Auth state changed:', event, session?.user?.email);
+        setUser(session?.user ?? null);
+        setAuthError('');
+        
+        if (session?.user) {
+          await loadTasks(session.user.id);
+        } else {
+          setTasks([]);
+        }
+      }
+    );
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const loadTasks = async (userId) => {
+    try {
+      const { data, error } = await supabase
+        .from('tasks')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error loading tasks:', error);
+        setAuthError('Failed to load tasks');
+      } else {
+        setTasks(data || []);
+      }
+    } catch (error) {
+      console.error('Load tasks failed:', error);
+      setAuthError('Failed to load tasks');
     }
   };
 
-  const toggleTask = (id) => {
-    setTasks(tasks.map(task => 
-      task.id === id 
-        ? { ...task, completed: !task.completed, completedAt: !task.completed ? new Date().toISOString() : null }
-        : task
-    ));
+  const handleAuthSuccess = async (user) => {
+    setUser(user);
+    setAuthError('');
+    await loadTasks(user.id);
   };
 
-  const removeTask = (id) => {
-    setTasks(tasks.filter(task => task.id !== id));
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      setUser(null);
+      setTasks([]);
+      setAuthError('');
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
   };
 
-  const activeTasks = tasks.filter(task => !task.completed);
-  const completedTasks = tasks.filter(task => task.completed);
+  const addTask = async (text, priority) => {
+    if (!user) return;
+
+    try {
+      const newTask = {
+        user_id: user.id,
+        text: text.trim(),
+        priority,
+        completed: false,
+        created_at: new Date().toISOString()
+      };
+
+      const { data, error } = await supabase
+        .from('tasks')
+        .insert([newTask])
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error adding task:', error);
+        setAuthError('Failed to add task');
+      } else {
+        setTasks(prev => [data, ...prev]);
+      }
+    } catch (error) {
+      console.error('Add task failed:', error);
+      setAuthError('Failed to add task');
+    }
+  };
+
+  const toggleTask = async (taskId) => {
+    const task = tasks.find(t => t.id === taskId);
+    if (!task) return;
+
+    const updatedTask = {
+      completed: !task.completed,
+      completed_at: !task.completed ? new Date().toISOString() : null
+    };
+
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .update(updatedTask)
+        .eq('id', taskId);
+
+      if (error) {
+        console.error('Error updating task:', error);
+        setAuthError('Failed to update task');
+      } else {
+        setTasks(prev => prev.map(t => 
+          t.id === taskId 
+            ? { ...t, ...updatedTask }
+            : t
+        ));
+      }
+    } catch (error) {
+      console.error('Toggle task failed:', error);
+      setAuthError('Failed to update task');
+    }
+  };
+
+  const removeTask = async (taskId) => {
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .delete()
+        .eq('id', taskId);
+
+      if (error) {
+        console.error('Error deleting task:', error);
+        setAuthError('Failed to delete task');
+      } else {
+        setTasks(prev => prev.filter(t => t.id !== taskId));
+      }
+    } catch (error) {
+      console.error('Delete task failed:', error);
+      setAuthError('Failed to delete task');
+    }
+  };
+
+  if (loading) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        minHeight: '100vh',
+        color: 'var(--text-primary)'
+      }}>
+        <div>
+          <h2>Loading...</h2>
+          <p>Connecting to your tasks...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <AuthForm onAuthSuccess={handleAuthSuccess} error={authError} />;
+  }
 
   return (
-    <div className="app-container">
-      <div className="header">
-        <h1>📝 To-Do App</h1>
-        <p>Simple task management that works!</p>
-      </div>
-
-      <div className="task-input-section">
-        <div className="input-group">
-          <input
-            type="text"
-            value={newTask}
-            onChange={(e) => setNewTask(e.target.value)}
-            placeholder="What needs to be done?"
-            onKeyPress={(e) => e.key === 'Enter' && addTask()}
-            className="task-input"
-          />
-          <select 
-            value={priority} 
-            onChange={(e) => setPriority(e.target.value)}
-            className="priority-select"
-          >
-            <option value="low">🟢 Low</option>
-            <option value="medium">🟡 Medium</option>
-            <option value="high">🔴 High</option>
-          </select>
-          <button onClick={addTask} className="add-btn">
-            Add Task
-          </button>
+    <div style={{ minHeight: '100vh', padding: '20px' }}>
+      <Navigation 
+        username={user.email} 
+        onLogout={handleLogout} 
+      />
+      
+      {authError && (
+        <div style={{
+          background: 'rgba(220, 53, 69, 0.1)',
+          color: '#dc3545',
+          padding: '12px',
+          borderRadius: '6px',
+          marginBottom: '20px',
+          textAlign: 'center'
+        }}>
+          {authError}
         </div>
-      </div>
+      )}
 
-      <div className="stats">
-        <div className="stat">
-          <span className="stat-number">{activeTasks.length}</span>
-          <span className="stat-label">Active</span>
-        </div>
-        <div className="stat">
-          <span className="stat-number">{completedTasks.length}</span>
-          <span className="stat-label">Completed</span>
-        </div>
-        <div className="stat">
-          <span className="stat-number">{tasks.length}</span>
-          <span className="stat-label">Total</span>
-        </div>
-      </div>
-
-      <div className="tasks-section">
-        <h2>Active Tasks ({activeTasks.length})</h2>
-        {activeTasks.length === 0 ? (
-          <div className="empty-state">
-            <p>🎉 No active tasks! Add one above to get started.</p>
-          </div>
-        ) : (
-          <ul className="task-list">
-            {activeTasks.map(task => (
-              <li key={task.id} className="task">
-                <div className="task-content">
-                  <input 
-                    type="checkbox" 
-                    checked={task.completed}
-                    onChange={() => toggleTask(task.id)}
-                  />
-                  <div className={`priority-dot priority-${task.priority}`}></div>
-                  <span className="task-text">{task.text}</span>
-                  <span className={`priority-badge priority-${task.priority}`}>
-                    {task.priority.toUpperCase()}
-                  </span>
-                </div>
-                <button onClick={() => removeTask(task.id)} className="delete-btn">
-                  ×
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-
-        {completedTasks.length > 0 && (
-          <>
-            <h2>Completed Tasks ({completedTasks.length})</h2>
-            <ul className="task-list">
-              {completedTasks.map(task => (
-                <li key={task.id} className="task completed">
-                  <div className="task-content">
-                    <input 
-                      type="checkbox" 
-                      checked={task.completed}
-                      onChange={() => toggleTask(task.id)}
-                    />
-                    <div className={`priority-dot priority-${task.priority}`}></div>
-                    <span className="task-text">{task.text}</span>
-                    <span className="completion-time">
-                      ✅ {new Date(task.completedAt).toLocaleDateString()}
-                    </span>
-                  </div>
-                  <button onClick={() => removeTask(task.id)} className="delete-btn">
-                    ×
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </>
-        )}
-      </div>
+      <Routes>
+        <Route 
+          path="/todo" 
+          element={
+            <TodoPage 
+              tasks={tasks}
+              onAddTask={addTask}
+              onToggleTask={toggleTask}
+              onRemoveTask={removeTask}
+            />
+          } 
+        />
+        <Route 
+          path="/completed" 
+          element={
+            <CompletedPage 
+              tasks={tasks}
+              onToggleTask={toggleTask}
+              onRemoveTask={removeTask}
+            />
+          } 
+        />
+        <Route path="/" element={<Navigate to="/todo" replace />} />
+      </Routes>
     </div>
   );
 }
