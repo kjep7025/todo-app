@@ -42,10 +42,6 @@ function TodoPage({ tasks, onAddTask, onToggleTask, onRemoveTask }) {
       </div>
     </div>
   );
-        />
-      </div>
-    </div>
-  );
 }
 
 export default TodoPage;
