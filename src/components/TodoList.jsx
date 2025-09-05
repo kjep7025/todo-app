@@ -27,53 +27,14 @@ function TodoList({ tasks, onToggleTask, onRemoveTask, showCompleted = false }) 
 
   return (
     <div className="todo-list-container">
-      {!showCompleted && (
-        <div className="task-stats">
-          <div className="stat-item">
-            <span className="stat-number">{activeTasks.length}</span>
-            <span className="stat-label">Active</span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-number">{completedTasks.length}</span>
-            <span className="stat-label">Completed</span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-number">{tasks.length}</span>
-            <span className="stat-label">Total</span>
-          </div>
-        </div>
-      )}
-
-      {!showCompleted && (
-        <div className="filter-buttons">
-          <button 
-            className={filter === 'active' ? 'filter-btn active' : 'filter-btn'}
-            onClick={() => setFilter('active')}
-          >
-            Active Tasks
-          </button>
-          <button 
-            className={filter === 'all' ? 'filter-btn active' : 'filter-btn'}
-            onClick={() => setFilter('all')}
-          >
-            All Active
-          </button>
-        </div>
-      )}
-
       {sortedTasks.length === 0 ? (
         <div className="empty-state">
-          <div className="empty-icon">📝</div>
-          <h3>
-            {showCompleted 
-              ? "No completed tasks yet" 
-             : "No active tasks"
-            }
-          </h3>
+          <div className="empty-icon">🎉</div>
           <p>
             {showCompleted 
-              ? "Complete some tasks to see them here!" 
-             : "Add a new task to get started"}
+              ? "No completed tasks yet" 
+             : "No active tasks! Add one above to get started."
+            }
           </p>
         </div>
       ) : (

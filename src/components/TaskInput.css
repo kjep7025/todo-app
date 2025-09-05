@@ -1,6 +1,13 @@
-/* TaskInput component styles */
+.task-input-container {
+  background: #2a2a2a;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 30px;
+  border: 1px solid #404040;
+}
+
 .task-input-form {
-  margin-bottom: 24px;
+  margin: 0;
 }
 
 .input-group {
@@ -11,31 +18,31 @@
 
 .task-input {
   flex: 1;
-  padding: 12px 16px;
+  padding: 14px 16px;
   border-radius: 8px;
-  border: 1px solid var(--border-color);
-  background: var(--bg-input);
-  color: var(--text-primary);
+  border: 1px solid #555;
+  background: #1a1a1a;
+  color: white;
   font-size: 1rem;
   transition: all 0.2s ease;
 }
 
 .task-input:focus {
   outline: none;
-  border-color: var(--primary-blue);
-  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
 .task-input::placeholder {
-  color: var(--text-muted);
+  color: #888;
 }
 
 .priority-select {
-  padding: 12px 16px;
+  padding: 14px 16px;
   border-radius: 8px;
-  border: 1px solid var(--border-color);
-  background: var(--bg-input);
-  color: var(--text-primary);
+  border: 1px solid #555;
+  background: #1a1a1a;
+  color: white;
   font-size: 1rem;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -44,19 +51,32 @@
 
 .priority-select:focus {
   outline: none;
-  border-color: var(--primary-blue);
-  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
 .priority-select option {
-  background: var(--bg-secondary);
-  color: var(--text-primary);
+  background: #2a2a2a;
+  color: white;
   padding: 8px;
 }
-.add-btn {
-  padding: 12px 20px;
-  white-space: nowrap;
+
+.add-task-btn {
+  padding: 14px 24px;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
   font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.add-task-btn:hover {
+  background: #5a67d8;
+  transform: translateY(-1px);
 }
 
 /* Responsive design */

@@ -17,7 +17,34 @@ function TaskInput({ onAddTask }) {
   };
 
   return (
-    <form className="task-input-form" onSubmit={handleSubmit}>
+    <div className="task-input-container">
+      <form className="task-input-form" onSubmit={handleSubmit}>
+        <div className="input-group">
+          <input
+            type="text"
+            value={task}
+            onChange={(e) => setTask(e.target.value)}
+            placeholder="What needs to be done?"
+            className="task-input"
+            autoFocus
+          />
+          <select 
+            value={priority} 
+            onChange={(e) => setPriority(e.target.value)}
+            className="priority-select"
+          >
+            <option value="low">🟢 Low</option>
+            <option value="medium">🟡 Medium</option>
+            <option value="high">🔴 High</option>
+          </select>
+          <button type="submit" className="add-task-btn">
+            Add Task
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
       <div className="input-group">
         <input
           type="text"
