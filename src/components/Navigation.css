@@ -1,8 +1,8 @@
 /* Navigation component styles */
 .navigation {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: 16px;
   padding: 16px 24px;
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border-color);
@@ -11,15 +11,20 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.nav-brand h1 {
+.nav-header {
+  text-align: center;
+}
+
+.nav-header h1 {
   margin: 0;
-  font-size: 1.5rem;
+  font-size: 1.8rem;
   color: var(--text-primary);
   font-weight: 600;
 }
 
 .nav-links {
   display: flex;
+  justify-content: center;
   gap: 8px;
 }
 
@@ -46,6 +51,7 @@
 
 .nav-user {
   display: flex;
+  justify-content: center;
   align-items: center;
   gap: 12px;
 }
@@ -62,19 +68,12 @@
 /* Responsive navigation */
 @media (max-width: 768px) {
   .navigation {
-    flex-direction: column;
     gap: 16px;
     padding: 16px;
   }
   
-  .nav-links {
-    order: 2;
-  }
-  
   .nav-user {
-    order: 3;
     flex-direction: column;
     gap: 8px;
-    text-align: center;
   }
 }

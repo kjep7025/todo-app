@@ -4,7 +4,7 @@ import './Navigation.css';
 function Navigation({ username, onLogout }) {
   return (
     <nav className="navigation">
-      <div className="nav-brand">
+      <div className="nav-header">
         <h1>To-Do App</h1>
       </div>
       
