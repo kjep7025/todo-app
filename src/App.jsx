@@ -56,10 +56,11 @@ function App() {
     setTasks([]);
   };
 
-  const addTask = (taskText) => {
+  const addTask = (taskText, priority = 'medium') => {
     const newTask = {
       id: Date.now() + Math.random(), // Simple ID generation
       text: taskText,
+      priority: priority,
       completed: false,
       createdAt: new Date().toISOString(),
       completedAt: null

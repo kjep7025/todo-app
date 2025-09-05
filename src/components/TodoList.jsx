@@ -11,6 +11,14 @@ function TodoList({ tasks, onToggleTask, onRemoveTask, showCompleted = false }) 
     return true;
   });
 
+  // Sort tasks by priority (high -> medium -> low) and then by creation date
+  const sortedTasks = filteredTasks.sort((a, b) => {
+    const priorityOrder = { high: 3, medium: 2, low: 1 };
+    if (priorityOrder[a.priority] !== priorityOrder[b.priority]) {
+      return priorityOrder[b.priority] - priorityOrder[a.priority];
+    }
+    return new Date(b.createdAt) - new Date(a.createdAt);
+  });
   const activeTasks = tasks.filter(task => !task.completed);
   const completedTasks = tasks.filter(task => task.completed);
 
@@ -56,7 +64,7 @@ function TodoList({ tasks, onToggleTask, onRemoveTask, showCompleted = false }) 
         </div>
       )}
 
-      {filteredTasks.length === 0 ? (
+      {sortedTasks.length === 0 ? (
         <div className="empty-state">
           <div className="empty-icon">📝</div>
           <h3>
@@ -77,7 +85,7 @@ function TodoList({ tasks, onToggleTask, onRemoveTask, showCompleted = false }) 
         </div>
       ) : (
         <ul className="task-list">
-          {filteredTasks.map((task) => (
+          {sortedTasks.map((task) => (
             <li key={task.id} className={`task ${task.completed ? 'completed' : ''}`}>
               <div className="task-content">
                 <input 
@@ -86,7 +94,11 @@ function TodoList({ tasks, onToggleTask, onRemoveTask, showCompleted = false }) 
                   onChange={() => onToggleTask(task.id)}
                   className="task-checkbox"
                 />
+                <div className={`priority-indicator priority-${task.priority}`}></div>
                 <span className="task-text">{task.text}</span>
+                <span className={`priority-label priority-${task.priority}`}>
+                  {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}
+                </span>
                 {task.completedAt && (
                   <span className="completion-time">
                     Completed {new Date(task.completedAt).toLocaleDateString()}
