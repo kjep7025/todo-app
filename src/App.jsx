@@ -11,6 +11,7 @@ function App() {
   // ---------- Authentication state ----------
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   // ---------- Task state ----------
   const [tasks, setTasks] = useState([]);
@@ -19,14 +20,18 @@ function App() {
   useEffect(() => {
     const initializeApp = async () => {
       try {
+        console.log('Initializing app...');
         const currentUser = await getCurrentUser();
+        console.log('Current user:', currentUser);
         if (currentUser) {
           setUser(currentUser);
           await loadTasks();
         }
       } catch (error) {
         console.error('Error initializing app:', error);
+        setError(error.message);
       } finally {
+        console.log('App initialization complete');
         setLoading(false);
       }
     };
@@ -35,6 +40,7 @@ function App() {
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state changed:', event, session?.user?.email);
       if (session?.user) {
         setUser(session.user);
         await loadTasks();
@@ -42,6 +48,7 @@ function App() {
         setUser(null);
         setTasks([]);
       }
+      setLoading(false);
     });
 
     return () => subscription.unsubscribe();
@@ -117,7 +124,12 @@ function App() {
   };
 
   if (loading) {
-    return <div className="loading">Loading...</div>;
+    return (
+      <div className="loading">
+        <div>Loading...</div>
+        {error && <div style={{ color: '#ef4444', marginTop: '10px' }}>Error: {error}</div>}
+      </div>
+    );
   }
 
   // ---------- Authentication form ----------
