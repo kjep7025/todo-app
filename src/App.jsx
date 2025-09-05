@@ -20,18 +20,24 @@ function App() {
   useEffect(() => {
     const initializeApp = async () => {
       try {
-        console.log('Initializing app...');
+        console.log('🚀 Initializing app...');
+        console.log('📍 Step 1: Getting current user');
         const currentUser = await getCurrentUser();
-        console.log('Current user:', currentUser);
+        console.log('👤 Current user:', currentUser?.email || 'No user');
+        
         if (currentUser) {
+          console.log('📍 Step 2: Setting user state');
           setUser(currentUser);
+          console.log('📍 Step 3: Loading tasks');
           await loadTasks();
+        } else {
+          console.log('📍 No user found, showing auth form');
         }
       } catch (error) {
-        console.error('Error initializing app:', error);
+        console.error('❌ Error initializing app:', error);
         setError(error.message);
       } finally {
-        console.log('App initialization complete');
+        console.log('✅ App initialization complete');
         setLoading(false);
       }
     };
@@ -40,7 +46,7 @@ function App() {
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth state changed:', event, session?.user?.email);
+      console.log('🔄 Auth state changed:', event, session?.user?.email || 'No user');
       if (session?.user) {
         setUser(session.user);
         await loadTasks();
@@ -56,46 +62,51 @@ function App() {
 
   const loadTasks = async () => {
     try {
+      console.log('📋 Loading tasks...');
       const { data, error } = await getTasks();
       if (error) throw error;
+      console.log('📋 Tasks loaded:', data?.length || 0);
       setTasks(data || []);
     } catch (error) {
-      console.error('Error loading tasks:', error);
+      console.error('❌ Error loading tasks:', error);
+      setError(error.message);
     }
   };
 
   const handleAuthSuccess = (user) => {
+    console.log('✅ Auth success for:', user.email);
     setUser(user);
   };
 
   const handleLogout = async () => {
     try {
-      console.log('Logging out user...');
+      console.log('👋 Logging out user...');
       await supabase.auth.signOut();
       setUser(null);
       setTasks([]);
-      console.log('User logged out successfully');
+      console.log('✅ User logged out successfully');
     } catch (error) {
-      console.error('Error signing out:', error);
+      console.error('❌ Error signing out:', error);
     }
   };
 
   const addTask = async (taskText, priority = 'medium') => {
     if (!taskText || taskText.trim() === '') {
-      console.warn('Attempted to add empty task');
+      console.warn('⚠️ Attempted to add empty task');
       return;
     }
     
     try {
-      console.log('Adding task:', taskText, 'with priority:', priority);
+      console.log('➕ Adding task:', taskText, 'with priority:', priority);
       const { data, error } = await addTaskToDb(taskText, priority);
       if (error) throw error;
       if (data && data[0]) {
         setTasks(prevTasks => [...prevTasks, data[0]]);
-        console.log('Task added successfully:', data[0]);
+        console.log('✅ Task added successfully:', data[0].text);
       }
     } catch (error) {
-      console.error('Error adding task:', error);
+      console.error('❌ Error adding task:', error);
+      setError(error.message);
     }
   };
 
@@ -118,7 +129,8 @@ function App() {
         )
       );
     } catch (error) {
-      console.error('Error toggling task:', error);
+      console.error('❌ Error toggling task:', error);
+      setError(error.message);
     }
   };
 
@@ -128,15 +140,33 @@ function App() {
       if (error) throw error;
       setTasks(prevTasks => prevTasks.filter(task => task.id !== taskId));
     } catch (error) {
-      console.error('Error removing task:', error);
+      console.error('❌ Error removing task:', error);
+      setError(error.message);
     }
   };
 
+  // Show loading state with more details
   if (loading) {
     return (
       <div className="loading">
-        <div>Loading...</div>
-        {error && <div style={{ color: '#ef4444', marginTop: '10px' }}>Error: {error}</div>}
+        <div>🔄 Loading your tasks...</div>
+        <div style={{ fontSize: '0.9rem', color: '#aaa', marginTop: '10px' }}>
+          Connecting to database...
+        </div>
+        {error && (
+          <div style={{ 
+            color: '#ef4444', 
+            marginTop: '15px', 
+            padding: '10px', 
+            background: 'rgba(239, 68, 68, 0.1)',
+            borderRadius: '6px',
+            border: '1px solid rgba(239, 68, 68, 0.2)'
+          }}>
+            <strong>Error:</strong> {error}
+            <br />
+            <small>Check the browser console for more details</small>
+          </div>
+        )}
       </div>
     );
   }
@@ -149,6 +179,19 @@ function App() {
   // ---------- Main app with routing ----------
   return (
     <div className="app-container">
+      {error && (
+        <div style={{ 
+          color: '#ef4444', 
+          marginBottom: '20px', 
+          padding: '10px', 
+          background: 'rgba(239, 68, 68, 0.1)',
+          borderRadius: '6px',
+          border: '1px solid rgba(239, 68, 68, 0.2)',
+          textAlign: 'center'
+        }}>
+          <strong>Warning:</strong> {error}
+        </div>
+      )}
       <Navigation username={user.email} onLogout={handleLogout} />
       
       <Routes>
