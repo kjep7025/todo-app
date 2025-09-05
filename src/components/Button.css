@@ -1,0 +1,56 @@
+/* Button component styles */
+button {
+  border: none;
+  border-radius: 6px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+button:hover {
+  transform: translateY(-1px);
+}
+
+button:active {
+  transform: translateY(0);
+}
+
+/* Primary button (Add Task, Sign in) */
+button.primary {
+  background-color: var(--primary-blue);
+  color: var(--text-primary);
+}
+
+button.primary:hover {
+  background-color: var(--primary-blue-hover);
+}
+
+/* Delete button */
+button.delete {
+  background: var(--danger-red);
+  color: var(--text-primary);
+  padding: 6px 10px;
+}
+
+button.delete:hover {
+  background: var(--danger-red-hover);
+}
+
+/* Logout button */
+button.logout {
+  background: var(--logout-red);
+  color: var(--text-primary);
+  padding: 8px 10px;
+}
+
+button.logout:hover {
+  background: #c55555;
+}
+
+/* Button focus states */
+button:focus {
+  outline: 2px solid var(--primary-blue);
+  outline-offset: 2px;
+}
