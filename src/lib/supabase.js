@@ -3,14 +3,11 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
-console.log('Supabase config:', {
-  url: supabaseUrl ? 'Set' : 'Missing',
-  key: supabaseAnonKey ? 'Set' : 'Missing'
-});
-
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('Missing Supabase environment variables');
-  throw new Error('Supabase configuration is missing. Please check your environment variables.');
+  console.error('Missing Supabase environment variables:', {
+    url: supabaseUrl ? 'Present' : 'Missing',
+    key: supabaseAnonKey ? 'Present' : 'Missing'
+  });
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
@@ -20,16 +17,6 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     detectSessionInUrl: false
   }
 })
-
-// Test connection
-supabase.from('tasks').select('count', { count: 'exact', head: true })
-  .then(({ error }) => {
-    if (error) {
-      console.error('Supabase connection test failed:', error);
-    } else {
-      console.log('Supabase connection successful');
-    }
-  });
 
 // Auth helpers
 export const signUp = async (email, password) => {
