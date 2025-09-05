@@ -70,20 +70,29 @@ function App() {
 
   const handleLogout = async () => {
     try {
+      console.log('Logging out user...');
       await supabase.auth.signOut();
       setUser(null);
       setTasks([]);
+      console.log('User logged out successfully');
     } catch (error) {
       console.error('Error signing out:', error);
     }
   };
 
   const addTask = async (taskText, priority = 'medium') => {
+    if (!taskText || taskText.trim() === '') {
+      console.warn('Attempted to add empty task');
+      return;
+    }
+    
     try {
+      console.log('Adding task:', taskText, 'with priority:', priority);
       const { data, error } = await addTaskToDb(taskText, priority);
       if (error) throw error;
       if (data && data[0]) {
         setTasks(prevTasks => [...prevTasks, data[0]]);
+        console.log('Task added successfully:', data[0]);
       }
     } catch (error) {
       console.error('Error adding task:', error);

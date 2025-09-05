@@ -41,22 +41,40 @@ export const getCurrentUser = async () => {
 
 // Task helpers
 export const getTasks = async () => {
+  const user = await getCurrentUser();
+  if (!user) {
+    console.warn('No user found when fetching tasks');
+    return { data: [], error: null };
+  }
+  
+  console.log('Fetching tasks for user:', user.id);
   const { data, error } = await supabase
     .from('tasks')
     .select('*')
+    .eq('user_id', user.id)
     .order('created_at', { ascending: false })
   
+  console.log('Tasks fetched:', data?.length || 0, 'tasks');
   return { data, error }
 }
 
 export const addTask = async (text, priority = 'medium') => {
+  const user = await getCurrentUser();
+  if (!user) {
+    throw new Error('User must be authenticated to add tasks');
+  }
+  
+  if (!text || text.trim() === '') {
+    throw new Error('Task text cannot be empty');
+  }
+  
   const { data, error } = await supabase
     .from('tasks')
     .insert([
       {
-        text,
+        text: text.trim(),
         priority,
-        user_id: (await getCurrentUser())?.id
+        user_id: user.id
       }
     ])
     .select()

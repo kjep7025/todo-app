@@ -7,7 +7,10 @@ function TaskInput({ onAddTask }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (task.trim() === '') return;
+    if (task.trim() === '') {
+      alert('Please enter a task description');
+      return;
+    }
     onAddTask(task.trim(), priority);
     setTask('');
     setPriority('medium');

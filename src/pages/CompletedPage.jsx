@@ -2,6 +2,8 @@ import TodoList from '../components/TodoList';
 
 function CompletedPage({ tasks, onToggleTask, onRemoveTask }) {
   const completedTasks = tasks.filter(task => task.completed);
+  
+  console.log('CompletedPage: Total tasks:', tasks.length, 'Completed tasks:', completedTasks.length);
 
   return (
     <div className="page-container">

@@ -4,14 +4,14 @@ import './TodoList.css';
 function TodoList({ tasks, onToggleTask, onRemoveTask, showCompleted = false }) {
   const [filter, setFilter] = useState('all');
   
+  console.log('TodoList rendering with', tasks.length, 'tasks, showCompleted:', showCompleted);
+  
   const filteredTasks = tasks.filter(task => {
     if (showCompleted) return task.completed;
-    // On active page, only show non-completed tasks
-    if (filter === 'active') return !task.completed;
-    if (filter === 'completed') return task.completed;
-    // For 'all' filter on active page, still only show non-completed tasks
     return !task.completed;
   });
+
+  console.log('Filtered tasks:', filteredTasks.length);
 
   // Sort tasks by priority (high -> medium -> low) and then by creation date
   const sortedTasks = filteredTasks.sort((a, b) => {
@@ -21,6 +21,7 @@ function TodoList({ tasks, onToggleTask, onRemoveTask, showCompleted = false }) 
     }
     return new Date(b.createdAt) - new Date(a.createdAt);
   });
+  
   const activeTasks = tasks.filter(task => !task.completed);
   const completedTasks = tasks.filter(task => task.completed);
 
